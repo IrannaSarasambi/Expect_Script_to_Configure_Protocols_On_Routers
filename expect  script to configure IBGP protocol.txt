@@ -1,0 +1,36 @@
+#!/usr/bin/expect
+
+
+set Mgmt_Ip "xx.xx.xx.xx" #put router ip address
+spawn  telnet  $Mgmt_Ip
+expect ">" ; send "en \r"
+expect "#"; send "config t \r"
+
+ set i 0
+ set j 0
+for {set vlan_id 1} {$vlan_id <=100} {incr vlan_id} {
+        if {$j  > 255} {
+                set j 0
+                incr i
+        }
+
+        expect "#"; send " interface xe13/4/3.$vlan_id \r"
+        expect "#"; send "no shut \r"
+        expect "#"; send "ip add 10.$i.$j.1/24 \r"
+
+        expect "#"; send " interface xe13/4/5.$vlan_id \r"
+        expect "#"; send "no shut \r"
+        expect "#"; send "ip add 20.$i.$j.1/24 \r"
+
+        expect "#"; send "router bgp 500 \r"
+
+        expect "#"; send " neighbor 10.$i.$j.2 remote-as 500 \r"
+        expect "#"; send " neighbor 10.$i.$j.2 update-source xe13/4/3.$vlan_id \r"
+        expect "#"; send " neighbor 20.$i.$j.2 remote-as 500 \r"
+        expect "#"; send " neighbor 20.$i.$j.2 update-source xe13/4/5.$vlan_id \r"
+
+        expect "#"; send "exit \r"
+
+
+        incr j
+}

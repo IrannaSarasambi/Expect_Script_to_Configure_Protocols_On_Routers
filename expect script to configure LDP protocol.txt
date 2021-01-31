@@ -1,0 +1,35 @@
+#!/usr/bin/expect
+
+set Mgmt_Ip "xx.xx.xx.xx" #put router ip address
+spawn  /sbin/telnet   $Mgmt_Ip
+expect ">" ; send "en \r"
+expect "#"; send "config t \r"
+
+ set i 1
+ set j 1
+for {set vlan_id 1} {$vlan_id <=150} {incr vlan_id} {
+        if {$j  > 255} {
+                set j 0
+                incr i
+        }
+
+
+
+        expect "#"; send " interface xe13/1/6.$vlan_id \r"
+        expect "#"; send " no shut \r"
+        expect "#"; send " label-switching \r"
+        expect "#"; send " ip add 10.$i.$j.1/24 \r"
+        expect "#"; send " mpls label protocol ldp \r"
+
+        expect "#"; send " interface xe13/2/9.$vlan_id \r"
+        expect "#"; send " no shut \r"
+        expect "#"; send " label-switching \r"
+        expect "#"; send " ip add 20.$i.$j.1/24 \r"
+        expect "#"; send " mpls label protocol ldp \r"
+
+        expect "#"; send "exit \r"
+
+
+        incr j
+}
+

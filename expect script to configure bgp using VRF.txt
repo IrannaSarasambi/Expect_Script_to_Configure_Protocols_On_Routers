@@ -1,0 +1,48 @@
+#!/usr/bin/expect
+
+set Mgmt_Ip "xx.xx.xx.xx" #put router ip address
+spawn  /sbin/telnet  $Mgmt_Ip
+expect ">" ; send "en \r"
+expect "#"; send "config t \r"
+
+ set i 1
+ set j 1
+for {set vlan_id 1} {$vlan_id <=2047} {incr vlan_id} {
+        if {$j  > 255} {
+                set j 0
+                incr i
+        }
+
+
+        expect "#"; send "ip vrf VPN_$vlan_id\r"
+        expect "#"; send "rd 65500:$vlan_id\r"
+        expect "#"; send "route-target both 65500:$vlan_id \r"
+
+
+
+        expect "#"; send " interface xe13/4/7.$vlan_id \r"
+        expect "#"; send " no shut \r"
+        expect "#"; send "ip vrf forwarding VPN_$vlan_id \r"
+        expect "#"; send " ip add 10.$i.$j.1/24 \r"
+         
+
+        expect "#"; send " int xe13/4/8.$vlan_id \r"
+        expect "#"; send " no shut \r"
+        expect "#"; send " ip vrf forwarding VPN_$vlan_id \r"
+        expect "#"; send " ip add 20.$i.$j.1/24 \r"
+         
+
+        expect "#"; send "router bgp 65500 \r"
+        expect "#"; send " address-family ipv4 vrf VPN_$vlan_id \r"
+        expect "#"; send " neighbor 10.$i.$j.2 remote-as 65100 \r"
+        expect "#"; send "no  neighbor10.$i.$j.2 send-community extended \r"
+
+        expect "#"; send "no neighbor 20.$i.$j.2  remote-as 65100 \r"
+        expect "#"; send "no neighbor 20.$i.$j.2 send-community extended \r"
+        expect "#"; send "exit-address-family \r"
+
+        expect "#"; send "exit \r"
+
+
+   incr j
+}

@@ -1,0 +1,41 @@
+#!/usr/bin/expect
+
+
+set Mgmt_Ip "xx.xx.xx.xx" #put router ip address
+spawn  telnet  $Mgmt_Ip
+expect ">" ; send "en \r"
+expect "#"; send "config t \r"
+#set count 1
+ set k 1
+ set i 1
+ set j 1
+for {set vlan_id 4095} {$vlan_id <=8188} {incr vlan_id} {
+        if {$j  > 255} {
+                set j 0
+                incr i
+        }
+
+       expect "#"; send "pwe3 circuit pwe$vlan_id $vlan_id mpls ldp 100.100.100.145 \r"
+
+
+        expect "#"; send " interface xe13/2/2.$k \r"
+        expect "#"; send " no shut \r"
+        expect "#"; send "pwe3 circuit pwe$vlan_id \r"
+
+
+        expect "#"; send " int xe13/2/5.$vlan_id \r"
+        expect "#"; send " no shut \r"
+        expect "#"; send " pwe3 circuit pwe$vlan_id \r"
+
+
+
+
+
+       expect "#"; send "exit \r"
+
+
+        incr k
+}
+
+
+~
